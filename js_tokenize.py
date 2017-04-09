@@ -33,14 +33,14 @@ class Server:
 
     def quit(self) -> None:
         if POLITE:
-            self._communicate('Q', b'')
+            self._communicate(b'Q', b'')
         os.kill(self._pid, signal.SIGTERM)
 
     def check_syntax(self, contents: Union[str, bytes]) -> bool:
-        return self._communicate('?', to_buffer(contents))
+        return self._communicate(b'?', to_buffer(contents))
 
     def tokenize(self, contents: str) -> Sequence[Token]:
-        value = self._communicate('T', to_buffer(contents))
+        value = self._communicate(b'T', to_buffer(contents))
         if isinstance(value, list):
             return [Token.from_json(t) for t in value]
         raise Exception(f"Bad return: {value!r}")
@@ -49,18 +49,16 @@ class Server:
         self.quit()
         self.server_address.unlink()
 
-    def _communicate(self, code: str, payload: bytes) -> Any:
+    def _communicate(self, code: bytes, payload: bytes) -> Any:
         self._wait_until_ready()
         # Establish a new socket.
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         sock.connect(str(self.server_address))
-        parts = [
-            code.encode('ascii'),
+        sock.sendall(b''.join((
+            code,
             struct.pack('>1I', len(payload)),
             payload
-        ]
-        for part in parts:
-            sock.send(part)
+        )))
         msg = self._slurp(sock)
         sock.close()
         return json.loads(msg)
