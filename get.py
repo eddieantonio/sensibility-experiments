@@ -16,6 +16,6 @@ cur = conn.execute('''
 
 owner, repo, path, source = cur.fetchone()
 tokens = tokenize(source)
-pprint(tokens)
-#print(f"/* {owner}/{repo}: {path}: {len(tokens)} tokens */")
-#print(source.decode('utf8'))
+print(f"/* {owner}/{repo}: {path}: {len(tokens)} tokens */")
+print(source.decode('utf8'))
+#pprint(tokens)
