@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
-import os
 import atexit
-import socket
 import json
-import struct
+import os
 import signal
+import socket
+import struct
+import tempfile
 
 from pathlib import Path
 
@@ -49,7 +50,7 @@ class Server:
         sock.connect(str(self.server_address))
         parts = [
             code.encode('ascii'),
-            struct.pack('>1I', payload),
+            struct.pack('>1I', len(payload)),
             payload
         ]
         for part in parts:
@@ -73,7 +74,6 @@ _server.connect()
 atexit.register(_server.close)
 
 check_syntax = _server.check_syntax
-
 
 if __name__ == '__main__':
     try:

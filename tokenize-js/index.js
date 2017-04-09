@@ -52,7 +52,7 @@ if (require.main === module) {
         }
 
         /* TODO: probably have some maximum size. */
-        buffer = Buffer.alloc(length);
+        buffer = Buffer.alloc(expectedLength);
         command = {
           'T'() {
             const source = buffer.toString('utf8');
@@ -77,7 +77,7 @@ if (require.main === module) {
       function appendChunk(offset = 0) {
         const length = chunk.length - offset;
         assert(length + receivedLength <= expectedLength);
-        chunk.copy(this.buffer, 0, offset);
+        chunk.copy(buffer, 0, offset);
         receivedLength += length;
 
         if (receivedLength >= expectedLength) {
