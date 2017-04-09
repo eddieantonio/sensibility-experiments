@@ -30,7 +30,7 @@ def to_bool(text: str) -> bool:
 
 if __name__ == '__main__':
     files = []
-    with open('results.csv') as csvfile:
+    with open('tokens.csv') as csvfile:
         # filehash ntokens sloc min.js path
         reader = csv.DictReader(csvfile)
         for row in reader:

@@ -20,7 +20,7 @@ def main():
     cur = conn.execute('''SELECT hash, path, source FROM source_file''')
 
     fields = 'filehash', 'ntokens', 'sloc', 'min.js', 'path'
-    with open('results.csv', 'w') as res:
+    with open('tokens.csv', 'w') as res:
         writer = csv.DictWriter(res, fields)
         writer.writeheader()
 
