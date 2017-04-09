@@ -11,7 +11,7 @@ import tempfile
 import time
 
 from pathlib import Path
-from typing import Any, Sequence, Union
+from typing import Any, Sequence, Union, cast
 
 from sensibility import Token  # type: ignore
 
@@ -80,19 +80,10 @@ class Server:
     def _slurp(self, sock: socket.socket) -> bytes:
         # Wait for the first few messages
         sock.settimeout(30)
-        chunks = [sock.recv(128)]
-        sock.setblocking(False)
-        while True:
-            try:
-                chunk = sock.recv(4096)
-            except BlockingIOError:
-                break
-            if len(chunk) == 0:
-                break
-            chunks.append(chunk)
-
-        buf = b''.join(chunks)
-        return buf
+        header = sock.recv(4)
+        payload_size: int = struct.unpack('>I', header)[0]
+        sock.setblocking(True)
+        return sock.recv(payload_size)
 
     def _spawn(self) -> int:
         pid = os.fork()

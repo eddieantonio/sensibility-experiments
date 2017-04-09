@@ -87,7 +87,13 @@ if (require.main === module) {
     });
 
     function finalize(source) {
-      client.write(JSON.stringify(source), 'utf8', () => {
+      const response = Buffer.from(JSON.stringify(source));
+      const length = response.length;
+      const header = Buffer.alloc(4);
+      header.writeUInt32BE(length, 0);
+      const payload = Buffer.concat([header, response], 4 + length);
+
+      client.write(payload, () => {
         client.end();
       });
     }
