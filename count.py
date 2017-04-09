@@ -28,7 +28,7 @@ def main():
         writer.writeheader()
 
         # Map to matrix
-        for filehash, path, source in cur:
+        for filehash, path, source in tqdm(cur):
             # Variables to create:
             #  - sloc
             #  - number of tokens
@@ -49,6 +49,7 @@ def main():
 
 def sloc(tokens: Sequence[Token]) -> int:
     return len(set(t.line for t in tokens))
+
 
 if __name__ == '__main__':
     main()

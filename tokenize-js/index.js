@@ -81,10 +81,8 @@ if (require.main === module) {
         receivedLength += length;
 
         if (receivedLength >= expectedLength) {
-          console.log(`${receivedLength}/${expectedLength}`);
           try {
             const output = command();
-            console.log('Computed');
             finalize(output);
           } catch (e) {
             finalize(e);
@@ -100,18 +98,9 @@ if (require.main === module) {
       header.writeUInt32BE(length, 0);
       const payload = Buffer.concat([header, response], 4 + length);
 
-      client.write(payload, () => {
-        console.log('Wrote all datums.');
-      });
+      client.write(payload, () => void 0);
     }
 
-    client.on('error', (err) => {
-      console.log(err);
-    });
-
-    client.on('close', (hadError) => {
-      console.log(`Close. Had error? ${hadError}`);
-    });
   });
 
   server.listen(socketPath);
