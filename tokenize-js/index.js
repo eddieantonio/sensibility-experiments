@@ -81,7 +81,14 @@ if (require.main === module) {
         receivedLength += length;
 
         if (receivedLength >= expectedLength) {
-          finalize(command());
+          console.log(`${receivedLength}/${expectedLength}`);
+          try {
+            const output = command();
+            console.log('Computed');
+            finalize(output);
+          } catch (e) {
+            finalize(e);
+          }
         }
       }
     });
@@ -94,18 +101,20 @@ if (require.main === module) {
       const payload = Buffer.concat([header, response], 4 + length);
 
       client.write(payload, () => {
-        client.end();
+        console.log('Wrote all datums.');
       });
     }
+
+    client.on('error', (err) => {
+      console.log(err);
+    });
+
+    client.on('close', (hadError) => {
+      console.log(`Close. Had error? ${hadError}`);
+    });
   });
 
-  server.on('error', err => {
-    throw err;
-  });
-
-  server.listen(socketPath, () => {
-    console.log(`server bound on ${socketPath}`);
-  });
+  server.listen(socketPath);
 }
 
 function tokenize(source) {

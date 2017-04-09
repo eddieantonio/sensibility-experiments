@@ -28,7 +28,7 @@ def main():
         writer.writeheader()
 
         # Map to matrix
-        for filehash, path, source in tqdm(cur):
+        for filehash, path, source in cur:
             # Variables to create:
             #  - sloc
             #  - number of tokens

@@ -11,12 +11,14 @@ import tempfile
 import time
 
 from pathlib import Path
-from typing import Any, Sequence, Union, cast
+from typing import Any, List, Sequence, Union, cast
 
 from sensibility import Token  # type: ignore
 
 THIS_DIRECTORY = Path(__file__).parent
 TOKENIZE_JS_BIN = THIS_DIRECTORY / 'tokenize-js' / 'wrapper.sh'
+
+POLITE = False
 
 
 class Server:
@@ -30,7 +32,8 @@ class Server:
         return self
 
     def quit(self) -> None:
-        self._communicate('Q', b'')
+        if POLITE:
+            self._communicate('Q', b'')
         os.kill(self._pid, signal.SIGTERM)
 
     def check_syntax(self, contents: Union[str, bytes]) -> bool:
@@ -82,8 +85,18 @@ class Server:
         sock.settimeout(30)
         header = sock.recv(4)
         payload_size: int = struct.unpack('>I', header)[0]
+        bytes_left = payload_size
         sock.setblocking(True)
-        return sock.recv(payload_size)
+        chunks: List[bytes] = []
+        while bytes_left > 0:
+            chunk = sock.recv(bytes_left)
+            if len(chunk) == 0:
+                break
+            chunks.append(chunk)
+            bytes_left -= len(chunk)
+        payload = b''.join(chunks)
+        assert len(payload) == payload_size
+        return payload
 
     def _spawn(self) -> int:
         pid = os.fork()
