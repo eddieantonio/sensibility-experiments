@@ -23,7 +23,7 @@ def main():
     cur = conn.execute('''SELECT hash, path, source FROM source_file''')
 
     fields = 'filehash', 'ntokens', 'sloc', 'min.js', 'path'
-    with open('results', 'w') as res:
+    with open('results.csv', 'w') as res:
         writer = csv.DictWriter(res, fields)
         writer.writeheader()
 
@@ -45,6 +45,7 @@ def main():
                 'min.js': bool(minified.search(path)),
                 'path': Path(path).name
             })
+
 
 def sloc(tokens: Sequence[Token]) -> int:
     return len(set(t.line for t in tokens))
