@@ -8,7 +8,6 @@ import signal
 import socket
 import struct
 import tempfile
-import logging
 
 from pathlib import Path
 from typing import Any, Sequence
@@ -64,20 +63,17 @@ class Server:
         # Wait for the first few messages
         sock.settimeout(30)
         chunks = [sock.recv(128)]
-        logging.debug(f'initial read: {len(chunks[0])}')
         sock.setblocking(False)
         while True:
             try:
                 chunk = sock.recv(4096)
             except BlockingIOError:
                 break
-            logging.debug(f'subsequent read: {len(chunk)}')
             if len(chunk) == 0:
                 break
             chunks.append(chunk)
 
         buf = b''.join(chunks)
-        logging.debug(f'read {len(buf)} bytes total')
         return buf
 
     def _spawn(self) -> int:
@@ -98,7 +94,6 @@ check_syntax = _server.check_syntax
 tokenize = _server.tokenize
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
     try:
         while True:
             code = input('> ')
