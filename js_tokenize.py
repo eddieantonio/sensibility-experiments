@@ -8,9 +8,10 @@ import signal
 import socket
 import struct
 import tempfile
+import time
 
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any, Sequence, Union
 
 from sensibility import Token  # type: ignore
 
@@ -21,6 +22,7 @@ TOKENIZE_JS_BIN = THIS_DIRECTORY / 'tokenize-js' / 'wrapper.sh'
 class Server:
     def __init__(self, name: Path) -> None:
         self.server_address = name
+        self._ready = False
 
     def connect(self) -> 'Server':
         assert not self.server_address.exists()
@@ -31,11 +33,11 @@ class Server:
         self._communicate('Q', b'')
         os.kill(self._pid, signal.SIGTERM)
 
-    def check_syntax(self, contents: str) -> bool:
-        return self._communicate('?', contents.encode('UTF-8'))
+    def check_syntax(self, contents: Union[str, bytes]) -> bool:
+        return self._communicate('?', to_buffer(contents))
 
     def tokenize(self, contents: str) -> Sequence[Token]:
-        value = self._communicate('T', contents.encode('UTF-8'))
+        value = self._communicate('T', to_buffer(contents))
         if isinstance(value, list):
             return [Token.from_json(t) for t in value]
         raise Exception(f"Bad return: {value!r}")
@@ -45,6 +47,7 @@ class Server:
         self.server_address.unlink()
 
     def _communicate(self, code: str, payload: bytes) -> Any:
+        self._wait_until_ready()
         # Establish a new socket.
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         sock.connect(str(self.server_address))
@@ -57,7 +60,22 @@ class Server:
             sock.send(part)
         msg = self._slurp(sock)
         sock.close()
-        return json.loads(msg.decode('UTF-8'))
+        return json.loads(msg)
+
+    def _wait_until_ready(self):
+        if self._ready:
+            return
+        delta = 10  # ms
+        max_sleep = 60_000  # ms
+
+        sleep_time = 0
+        while sleep_time < max_sleep:
+            time.sleep(delta / 1000)
+            if self.server_address.exists():
+                break
+        else:
+            raise Exception(f"Waited maximum amount of time: {max_sleep}")
+        self._ready = True
 
     def _slurp(self, sock: socket.socket) -> bytes:
         # Wait for the first few messages
@@ -84,6 +102,13 @@ class Server:
                      str(TOKENIZE_JS_BIN),
                      str(self.server_address))
         return pid
+
+
+def to_buffer(contents: Union[str, bytes]) -> bytes:
+    if isinstance(contents, bytes):
+        return contents
+    else:
+        return contents.encode('UTF-8')
 
 
 _server = Server(Path('/tmp') / f"tokenize-{os.getpid()}.sock")

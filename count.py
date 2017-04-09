@@ -13,13 +13,9 @@ from pathlib import Path
 
 from tqdm import tqdm  # type: ignore
 
-from sensibility.token_utils import Token  # type: ignore
+from js_tokenize import Token, tokenize
 
 minified = re.compile(r'\bmin[.]js$')
-
-
-def parse(source: bytes) -> Sequence[Token]:
-    ...
 
 
 def main():
@@ -37,18 +33,21 @@ def main():
             #  - sloc
             #  - number of tokens
             #  - matches /\bmin[.]js$/
-            tokens = parse(source)
-            if len(ntokens) == 0:
+            tokens = tokenize(source)
+            if len(tokens) == 0:
                 # Skip zero length files
                 continue
 
             writer.writerow({
                 'filehash': filehash,
                 'ntokens': len(tokens),
-                'nlines': tokens[-1].lines,
+                'sloc': sloc(tokens),
                 'min.js': bool(minified.search(path)),
                 'path': Path(path).name
             })
+
+def sloc(tokens: Sequence[Token]) -> int:
+    return len(set(t.line for t in tokens))
 
 if __name__ == '__main__':
     main()
