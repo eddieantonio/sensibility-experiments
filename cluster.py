@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 # -*- coding: UTF-8 -*-
 # Copyright (C) 2017 Eddie Antonio Santos <easantos@ualberta.ca>
 #
@@ -20,11 +21,12 @@ import sys
 import csv
 
 import numpy as np  # type: ignore
-from sklearn.cluster import KMeans  # type: ignore
+#from sklearn.cluster import KMeans  # type: ignore
+import jenkspy  # type: ignore
 
 from operator import attrgetter
-from typing import NamedTuple, List
-from math import log
+from typing import NamedTuple, List, Tuple
+from math import log, exp
 
 
 class BaseSourceFile(NamedTuple):
@@ -50,27 +52,10 @@ def to_bool(text: str) -> bool:
     else:
         raise ValueError(text)
 
-def find_split(kmeans: KMeans, files: List[SourceFile]) -> None:
-    handwritten: List[SourceFile] = []
-    generated: List[SourceFile] = []
 
-    for label, sf in zip(kmeans.labels_, files):
-        if label == 0:
-            handwritten.append(sf)
-        else:
-            generated.append(sf)
-
-    a = max(handwritten, key=attrgetter('ratio'))
-    b = min(generated, key=attrgetter('ratio'))
-    split = (a.ratio + b.ratio) / 2
-
-    print(f"Split at {split:.1f}")
-    print(f"  last handwritten: {a.ratio:.1f}: {a.path}")
-    print(f"  first generated:  {b.ratio:.1f}: {b.path}")
-
-
-def dump(kmeans: KMeans, files: List[SourceFile]) -> None:
-    for label, sf in zip(kmeans.labels_, files):
+def dump(breakpoint: float, files: List[SourceFile]) -> None:
+    for sf in files:
+        label = 'gen' if sf.ratio > breakpoint else 'hw'
         print(f"{label}:{sf.ratio:.1f}:{sf.filehash}")
 
 
@@ -88,15 +73,16 @@ if __name__ == '__main__':
                 path=row['path']
             ))
 
-    # Plot the datums
-    xs = np.zeros((len(files), 1))
+    # Sort by ratio, ascending.
+    files.sort(key=attrgetter('ratio'))
+
+    # Prepare the data for jenks natural break algorithm
+    xs = np.zeros((len(files), 1), np.float64)
     for i, source in enumerate(files):
-        xs[i] = log(source.ntokens / source.sloc)
+        xs[i] = log(source.ratio)
 
-    estimator = KMeans(2)
-    kmeans = estimator.fit(xs)
+    log_break_point, = jenkspy.jenks_breaks(xs, nb_class=2)
+    break_point = exp(log_break_point)
 
-    if '--split' in sys.argv:
-        find_split(kmeans, files)
-    else:
-        dump(kmeans, files)
+    print(f'# {break_point:.1f}')
+    dump(break_point, files)
