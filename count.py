@@ -7,9 +7,6 @@ import sqlite3
 from typing import Sequence
 from pathlib import Path
 
-#import numpy as np  # type: ignore
-#import matplotlib.pyplot as ply  # type: ignore
-#from sklearn import svm  # type: ignore
 
 from tqdm import tqdm  # type: ignore
 

@@ -77,7 +77,7 @@ if (require.main === module) {
       function appendChunk(offset = 0) {
         const length = chunk.length - offset;
         assert(length + receivedLength <= expectedLength);
-        chunk.copy(buffer, 0, offset);
+        chunk.copy(buffer, receivedLength, offset);
         receivedLength += length;
 
         if (receivedLength >= expectedLength) {
@@ -107,6 +107,8 @@ if (require.main === module) {
 }
 
 function tokenize(source) {
+  console.log(source.length);
+  console.log(source.slice(0, 72));
   source = removeShebangLine(source);
 
   /* TODO: retry on illegal tokens. */
