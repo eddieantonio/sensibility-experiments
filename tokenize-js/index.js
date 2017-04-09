@@ -107,8 +107,6 @@ if (require.main === module) {
 }
 
 function tokenize(source) {
-  console.log(source.length);
-  console.log(source.slice(0, 72));
   source = removeShebangLine(source);
 
   /* TODO: retry on illegal tokens. */
