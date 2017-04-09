@@ -1,2 +1,4 @@
 sources.sqlite3
-results.csv
+tokens.csv
+.Rhistory
+.Rdata
