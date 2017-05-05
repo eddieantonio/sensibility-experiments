@@ -56,7 +56,7 @@ def to_bool(text: str) -> bool:
 def dump(breakpoint: float, files: List[SourceFile]) -> None:
     for sf in files:
         label = 'gen' if sf.ratio > breakpoint else 'hw'
-        print(f"{label}:{sf.ratio:.1f}:{sf.filehash}")
+        print(f"{label},{sf.ratio:.1f},{sf.filehash}")
 
 
 if __name__ == '__main__':
@@ -73,16 +73,14 @@ if __name__ == '__main__':
                 path=row['path']
             ))
 
-    # Sort by ratio, ascending.
-    files.sort(key=attrgetter('ratio'))
-
     # Prepare the data for jenks natural break algorithm
     xs = np.zeros((len(files), 1), np.float64)
     for i, source in enumerate(files):
         xs[i] = log(source.ratio)
 
-    log_break_point, = jenkspy.jenks_breaks(xs, nb_class=2)
-    break_point = exp(log_break_point)
+    print("Computing breaks...", file=sys.stderr)
+    breaks = jenkspy.jenks_breaks(xs, nb_class=2)
+    start, break_point, end = (exp(p) for p in breaks)
 
-    print(f'# {break_point:.1f}')
+    print(f'# {break_point:.1f} [{start}, {end}]', file=sys.stderr)
     dump(break_point, files)
